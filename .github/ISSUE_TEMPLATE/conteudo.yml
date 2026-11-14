@@ -1,0 +1,30 @@
+name: 📚 Proposta de conteúdo
+description: Nova fase, artigo, minidesafio ou projeto real
+labels: [conteúdo]
+body:
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de conteúdo
+      options: [Fase nova, Artigo da Biblioteca, Minidesafio, Projeto real da Arena, Correção de conteúdo]
+    validations:
+      required: true
+  - type: dropdown
+    id: trilha
+    attributes:
+      label: Trilha
+      options: [HTML, CSS, JavaScript, Docker, Ferramentas (Git etc.), Outra]
+    validations:
+      required: true
+  - type: textarea
+    id: conceito
+    attributes:
+      label: Conceito ensinado
+      description: O que a pessoa aprende e por que é útil na prática.
+    validations:
+      required: true
+  - type: textarea
+    id: desafio
+    attributes:
+      label: Desafio e como validar
+      description: O que a pessoa precisa fazer e como o jogo sabe que ela acertou. Veja docs/CONTEUDO.md.

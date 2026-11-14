@@ -1,0 +1,19 @@
+name: 💡 Ideia ou melhoria
+description: Sugira um recurso novo para o jogo
+labels: [melhoria]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema isso resolve?
+      description: 'Ex.: "Quem está aprendendo Git não tem onde praticar".'
+    validations:
+      required: true
+  - type: textarea
+    id: ideia
+    attributes:
+      label: Como você imagina a solução?
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas que você pensou
