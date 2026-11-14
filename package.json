@@ -1,0 +1,51 @@
+{
+  "name": "coderealm",
+  "version": "6.0.0",
+  "description": "RPG 3D no navegador para aprender HTML, CSS, JavaScript e Docker resolvendo desafios reais.",
+  "private": true,
+  "license": "MIT",
+  "author": "Breno (BsCode)",
+  "homepage": "https://breesiqueiramkt.github.io/coderealm/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breesiqueiramkt/coderealm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/breesiqueiramkt/coderealm/issues"
+  },
+  "keywords": [
+    "educação",
+    "programação",
+    "rpg",
+    "threejs",
+    "html",
+    "css",
+    "javascript",
+    "docker",
+    "pwa",
+    "gamificação"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/serve.js 8080",
+    "test": "node --test \"tests/unit/**/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 \"tests/e2e/**/*.test.js\"",
+    "test:all": "npm test && npm run test:e2e",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check && npm test",
+    "icons": "python3 scripts/make-icons.py",
+    "screenshots": "node scripts/screenshots.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "playwright": "1.63.0",
+    "prettier": "^3.10.1"
+  }
+}
