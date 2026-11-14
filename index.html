@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>CodeRealm — RPG para aprender programação</title>
+    <meta
+      name="description"
+      content="RPG 3D gratuito no navegador para aprender HTML, CSS, JavaScript e Docker resolvendo desafios reais. Funciona offline."
+    />
+    <meta name="theme-color" content="#1a1626" />
+    <meta name="color-scheme" content="dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CodeRealm — RPG para aprender programação" />
+    <meta
+      property="og:description"
+      content="Explore um mundo 3D e destrave o caminho escrevendo HTML, CSS, JavaScript e comandos Docker."
+    />
+    <meta property="og:image" content="assets/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="src/styles/main.css" />
+  </head>
+  <body class="v3">
+    <a class="skip-link" href="#hub-main">Pular para o conteúdo</a>
+    <noscript><p class="noscript">O CodeRealm precisa de JavaScript ativado para funcionar.</p></noscript>
+
+    <!-- Mundo 3D (tela inteira) -->
+    <div id="world" aria-hidden="true"></div>
+    <div id="fade"></div>
+    <div id="hint" role="status"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <!-- HUD -->
+    <header id="hud">
+      <button id="btn-menu" class="btn ghost small" title="Menu (Esc)" aria-label="Abrir menu">☰ Menu</button>
+      <button class="btn ghost small btn-mute" title="Som" aria-label="Ligar ou desligar o som">🔊</button>
+      <div class="avatar" aria-hidden="true">⚔</div>
+      <div class="player">
+        <div class="name"><span id="hud-name">Aprendiz</span> <span id="hud-level">Nv. 1</span></div>
+        <div
+          class="xpbar"
+          id="hud-xp"
+          role="progressbar"
+          aria-label="Experiência até o próximo nível"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <div id="hud-xp-fill"></div>
+        </div>
+      </div>
+      <div class="coin-chip" id="hud-coin-chip" title="Moedas">
+        <span aria-hidden="true">🪙</span> <span id="hud-coins">0</span><span class="sr-only"> moedas</span>
+      </div>
+      <div class="inventory" id="hud-inventory" title="Inventário"></div>
+    </header>
+    <div id="ach-pop" role="status" aria-live="polite"></div>
+
+    <!-- Controles de toque (celular/tablet) -->
+    <div id="touch" aria-hidden="true">
+      <div class="dpad">
+        <button data-key="arrowup" class="up">▲</button>
+        <button data-key="arrowleft" class="left">◀</button>
+        <button data-key="arrowright" class="right">▶</button>
+        <button data-key="arrowdown" class="down">▼</button>
+      </div>
+      <button class="act" data-action="interact">E</button>
+    </div>
+
+    <!-- Tutorial (primeira vez que entra no mundo) -->
+    <div id="tutorial" class="hidden" role="dialog" aria-modal="true" aria-labelledby="tut-title">
+      <div class="tut-card">
+        <h2 id="tut-title">Como jogar</h2>
+        <ul>
+          <li>
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ou setas: andar <span class="muted">(no celular, use o direcional)</span>
+          </li>
+          <li><kbd>E</kbd>: interagir com o que está na sua frente: pessoas, baús, quiosques</li>
+          <li>Encostar no obstáculo de uma fase abre o desafio de código</li>
+          <li>Portais levam às fases. O portal <b>⌂</b> de cada área volta para a Academia</li>
+          <li><kbd>Esc</kbd>: menu, Biblioteca, Arena e Configurações</li>
+        </ul>
+        <button class="btn primary" id="tut-ok">Bora! ▸</button>
+      </div>
+    </div>
+
+    <!-- Caixa de diálogo RPG -->
+    <div id="dialog" class="hidden" role="dialog" aria-live="polite" aria-labelledby="dialog-name">
+      <div class="dialog-head"><span id="dialog-name"></span><span id="dialog-count" class="muted"></span></div>
+      <p id="dialog-text"></p>
+      <button id="dialog-next" class="btn small">Próximo ▸</button>
+      <span class="dialog-tip muted">Espaço / Enter</span>
+    </div>
+
+    <!-- Hub -->
+    <div id="hub">
+      <nav class="hub-nav" aria-label="Menu principal">
+        <div class="logo">
+          <span class="logo-mark" aria-hidden="true">{ }</span>
+          <div>
+            <div class="logo-name">CodeRealm</div>
+            <div class="muted">Academia do Código</div>
+          </div>
+        </div>
+        <button class="nav-btn resume" id="btn-resume">▶ Jogar <small>Esc</small></button>
+        <button class="nav-btn" data-tab="home">🏠 Início</button>
+        <button class="nav-btn" data-tab="phases">🗺️ Fases</button>
+        <button class="nav-btn" data-tab="library">📚 Biblioteca</button>
+        <button class="nav-btn" data-tab="arena">🎯 Arena de treino</button>
+        <button class="nav-btn" data-tab="character">🧑‍🎨 Personagem</button>
+        <button class="nav-btn" data-tab="achievements">🏅 Conquistas</button>
+        <button class="nav-btn" data-tab="profile">👤 Perfil</button>
+        <button class="nav-btn" data-tab="settings">⚙️ Configurações</button>
+        <div class="nav-spacer"></div>
+        <button class="nav-btn btn-mute-row"><span class="btn-mute">🔊</span> Som e música</button>
+        <button class="nav-btn danger" id="btn-reset">↺ Zerar progresso</button>
+        <div class="nav-foot muted">
+          <span class="app-version"></span> ·
+          <a href="https://github.com/breesiqueiramkt/coderealm" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+      <main class="hub-main" id="hub-main">
+        <section id="page-home" class="hub-page">
+          <div class="hero">
+            <div class="hero-kicker">RPG de programação</div>
+            <h1>Aprenda HTML, CSS, JavaScript e Docker explorando um mundo vivo.</h1>
+            <p>Cada obstáculo do mapa é um conceito. Ouça o mentor, resolva o desafio no editor, veja o caminho se abrir.</p>
+            <div id="no-webgl" class="notice hidden">
+              Seu navegador não conseguiu iniciar o 3D (WebGL). A <b>Biblioteca</b>, a <b>Arena</b> e os <b>Projetos reais</b> continuam
+              funcionando. Tente outro navegador ou ative a aceleração de hardware para jogar.
+            </div>
+            <div class="hero-actions">
+              <button class="btn primary big" id="btn-play">Começar jornada ▸</button
+              ><button class="btn ghost big" data-tab="library">Só estudar</button>
+            </div>
+            <div id="home-cards" class="home-cards"></div>
+            <div class="hero-grid">
+              <div class="feat">
+                <span>🏛️</span><b>Academia + 8 fases</b><small>Mundo central com portais · HTML, CSS, JS e 5 de Docker</small>
+              </div>
+              <div class="feat"><span>📚</span><b>Biblioteca</b><small>21 artigos com exemplos de código</small></div>
+              <div class="feat"><span>🎯</span><b>Arena</b><small>6 projetos reais, 35 minidesafios, playground e terminal</small></div>
+              <div class="feat"><span>🎓</span><b>Exame Final</b><small>Passou? Baixe seu certificado de conclusão</small></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="page-phases" class="hub-page hidden">
+          <h2>Mapa de fases</h2>
+          <p class="muted">
+            Fases concluídas podem ser repetidas quantas vezes quiser (sem XP novo) ou treinadas direto no desafio.
+            <button class="link-btn" id="btn-academy">Ir para a Academia ⌂</button>
+          </p>
+          <div id="phase-grid" class="phase-grid"></div>
+        </section>
+
+        <section id="page-library" class="hub-page hidden">
+          <h2>Biblioteca de estudos</h2>
+          <div class="lib-bar">
+            <div id="lib-tracks" class="pills"></div>
+            <input id="lib-search" type="search" placeholder="Buscar: flexbox, fetch, dockerfile..." aria-label="Buscar na Biblioteca" />
+          </div>
+          <div id="lib-list" class="lib-list"></div>
+          <article id="lib-article" class="hidden"></article>
+        </section>
+
+        <section id="page-character" class="hub-page hidden">
+          <h2>Personagem</h2>
+          <p class="muted">
+            Monte seu aprendiz. Itens com preço são comprados com moedas; os com cadeado abrem ao concluir fases. Saldo:
+            <b class="coin-count">0</b> 🪙
+          </p>
+          <div class="char-layout">
+            <div class="char-preview"><canvas id="char-canvas" width="280" height="320" aria-label="Prévia do personagem"></canvas></div>
+            <div id="char-opts" class="char-opts"></div>
+          </div>
+        </section>
+
+        <section id="page-achievements" class="hub-page hidden">
+          <h2>Conquistas</h2>
+          <p class="muted"><span id="ach-count">0</span> desbloqueadas. Cada uma paga moedas na hora.</p>
+          <div id="ach-list" class="ach-list"></div>
+        </section>
+
+        <section id="page-profile" class="hub-page hidden">
+          <h2>Perfil</h2>
+          <p class="muted">Seu progresso fica salvo neste navegador. Use exportar/importar para levar para outro computador.</p>
+          <div class="pf-name">
+            <label for="pf-name">Nome do aprendiz (vai no certificado)</label><input id="pf-name" maxlength="28" placeholder="Aprendiz" />
+          </div>
+          <div id="pf-stats" class="pf-stats"></div>
+          <h3 class="pf-h">Certificado</h3>
+          <div id="pf-cert" class="pf-cert"></div>
+          <h3 class="pf-h">Trilhas</h3>
+          <div id="pf-tracks" class="pf-tracks"></div>
+          <h3 class="pf-h">Coleção de itens</h3>
+          <div id="pf-items" class="pf-items"></div>
+          <h3 class="pf-h">Save</h3>
+          <div class="pf-save">
+            <button class="btn primary" id="pf-export">⬇ Exportar progresso</button
+            ><label class="btn ghost" for="pf-import">⬆ Importar progresso</label
+            ><input type="file" id="pf-import" accept=".json,application/json" hidden />
+          </div>
+        </section>
+
+        <section id="page-settings" class="hub-page hidden">
+          <h2>Configurações</h2>
+          <p class="muted">Salvas neste navegador, separadas do progresso.</p>
+          <form id="settings-form" class="settings" onsubmit="return false;"></form>
+        </section>
+
+        <section id="page-arena" class="hub-page hidden">
+          <h2>Arena de treino</h2>
+          <p class="muted">Tudo aqui é descartável: nada é salvo, nada dá XP. É o lugar de testar, quebrar e aprender.</p>
+          <div class="pills">
+            <button class="pill" data-arena="projects">🧱 Projetos reais</button
+            ><button class="pill" data-arena="minis">⚡ Minidesafios</button
+            ><button class="pill" data-arena="web">Playground HTML · CSS · JS</button
+            ><button class="pill" data-arena="docker">Terminal Docker livre</button
+            ><button class="pill" data-arena="practice">Desafios das fases</button>
+          </div>
+
+          <div id="arena-projects" class="arena-page">
+            <p class="muted">
+              Projetos de verdade, verificados no navegador: o jogo olha a página renderizada, não o texto do código. Cada um paga moedas
+              uma vez.
+            </p>
+            <div id="project-list" class="practice-list"></div>
+          </div>
+          <div id="arena-minis" class="arena-page hidden"><div id="mini-list" class="practice-list"></div></div>
+
+          <div id="arena-web" class="arena-page hidden">
+            <div id="pg-project" class="pg-project hidden"></div>
+            <div class="pg">
+              <div class="ide-pane">
+                <div class="ide-bar">index.html</div>
+                <textarea id="pg-html" class="editor" spellcheck="false" aria-label="Editor HTML"></textarea>
+              </div>
+              <div class="ide-pane">
+                <div class="ide-bar">style.css</div>
+                <textarea id="pg-css" class="editor" spellcheck="false" aria-label="Editor CSS"></textarea>
+              </div>
+              <div class="ide-pane">
+                <div class="ide-bar">script.js</div>
+                <textarea id="pg-js" class="editor" spellcheck="false" aria-label="Editor JavaScript"></textarea>
+              </div>
+              <div class="ide-pane">
+                <div class="ide-bar">preview <button id="pg-run" class="mini">▶ rodar</button></div>
+                <iframe
+                  id="pg-preview"
+                  class="preview"
+                  title="Pré-visualização"
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                ></iframe>
+              </div>
+              <div class="ide-pane wide">
+                <div class="ide-bar">console <button id="pg-clear" class="mini">limpar</button></div>
+                <div id="pg-console" class="console" role="log"></div>
+              </div>
+            </div>
+          </div>
+          <div id="arena-docker" class="arena-page hidden"><div id="arena-term-body"></div></div>
+          <div id="arena-practice" class="arena-page hidden"><div id="practice-list" class="practice-list"></div></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modal de desafio -->
+    <div id="modal-backdrop" class="hidden">
+      <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-head">
+          <span class="tag" id="modal-tag">HTML</span>
+          <h2 id="modal-title">Desafio</h2>
+          <span class="practice-badge">modo treino</span>
+          <button id="modal-close" class="x" title="Fechar" aria-label="Fechar">✕</button>
+        </div>
+        <p id="modal-intro" class="intro"></p>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Ordem importa: scripts clássicos compartilham o escopo global (sem build). Veja docs/ARQUITETURA.md -->
+    <script src="vendor/three.min.js"></script>
+    <script src="src/core/boot.js"></script>
+    <script src="src/core/settings.js"></script>
+    <!-- conteúdo (dados) -->
+    <script src="src/content/phases.js"></script>
+    <script src="src/content/maps.js"></script>
+    <script src="src/content/library.js"></script>
+    <script src="src/content/minis.js"></script>
+    <script src="src/content/projects.js"></script>
+    <script src="src/content/cosmetics.js"></script>
+    <script src="src/content/achievements.js"></script>
+    <!-- lógica -->
+    <script src="src/core/state.js"></script>
+    <script src="src/systems/audio.js"></script>
+    <script src="src/systems/docker-sim.js"></script>
+    <script src="src/systems/rewards.js"></script>
+    <script src="src/systems/minigames.js"></script>
+    <script src="src/systems/exam.js"></script>
+    <!-- interface -->
+    <script src="src/ui/ui.js"></script>
+    <script src="src/ui/hub.js"></script>
+    <script src="src/ui/touch.js"></script>
+    <!-- 3D e loop -->
+    <script src="src/engine/world.js"></script>
+    <script src="src/engine/game.js"></script>
+  </body>
+</html>
